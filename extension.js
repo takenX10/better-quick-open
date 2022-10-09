@@ -1,36 +1,78 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
+const dirTree = require("directory-tree");
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+const mypick = vscode.window.createQuickPick();
+let folders = [];
+let files = {};
 
-/**
- * @param {vscode.ExtensionContext} context
- */
-function activate(context) {
-
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "better-quick-open" is now active!');
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with  registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('better-quick-open.helloWorld', function () {
-		// The code you place here will be executed every time your command is executed
-
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from better-quick-open!');
-	});
-
-	context.subscriptions.push(disposable);
+function getIcon(type){
+    return type == "file" ? "$(file)":"$(folder)";
 }
 
-// This method is called when your extension is deactivated
-function deactivate() {}
+function transformToArray(current, path){
+    let newArray = {};
+    for(let f of current){
+        newArray[f.name] = {
+            label: `${getIcon(f.type)} ${f.name}`,
+            description: `${path}${f.name}`,
+            type: f.type
+        }
+        if(f.type == "directory"){
+            let transformed = transformToArray(f.children, `${path}${f.name}/`);
+            Object.keys(transformed).forEach((k)=>{
+                if (k != "label" && k != "current"){
+                    newArray[f.name][k] = transformed[k];
+                }
+            });
+        }
+    }
+    return newArray;
+}
+
+async function parseFiles(){
+    const directory = vscode.workspace.rootPath || "/";
+    let folders = [];
+    const tempfiles = dirTree(directory, {attributes:["type"]});
+    console.log(tempfiles);
+    let files = {
+        "/":transformToArray(tempfiles.children, "/")
+    }
+    Object.keys(files["/"]).forEach((k)=>{
+        if(k != "label" && k != "description"){
+            folders.push({
+                label: files["/"][k].label,
+                description: files["/"][k].description,
+                type: files["/"][k].type
+            })
+        }
+    });
+    folders = folders.sort(function(a,b){
+        if(a.type == b.type){
+            return (a.label > b.label ? -1 : 1);
+        }else {
+            return (a.type == "directory" ? -1 : 1);
+        }
+    });
+    return folders;
+}
+
+parseFiles().then((f)=>{
+    folders = f;
+    //mypick.items = folders;
+});
+
+
+function activate(context) {
+    let disposable = vscode.commands.registerCommand( 'better-quick-open.quickopen', async function () {
+        mypick.items = folders;
+        mypick.show();
+    });
+    context.subscriptions.push(disposable);
+}
+
+function deactivate() { }
 
 module.exports = {
-	activate,
-	deactivate
+    activate,
+    deactivate
 }
