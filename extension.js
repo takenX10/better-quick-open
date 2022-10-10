@@ -111,9 +111,10 @@ function activate(context) {
     const directory = (vscode.workspace.rootPath || "/");
     const tempfiles = dirTree(directory, {attributes:["type"]});
     files = transformToArray(tempfiles.children, "");
-    makeCurrentFolder(currentBasePath);
-    mypick.items = currentFoldersList;
     let disposable = vscode.commands.registerCommand( 'better-quick-open.quickopen', async function () {
+        currentBasePath = "";
+        makeCurrentFolder(currentBasePath);
+        mypick.items = currentFoldersList;
         mypick.show();
         mypick.onDidChangeValue((val)=>{
             if(val != ""){
