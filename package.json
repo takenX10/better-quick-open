@@ -2,7 +2,7 @@
   "name": "better-quick-open",
   "displayName": "better-quick-open",
   "description": "later",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.72.0"
   },

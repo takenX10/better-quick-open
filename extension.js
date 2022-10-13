@@ -1,18 +1,17 @@
 const vscode = require('vscode');
 const pathLibrary = require('path');
-const fs = require('fs');
 const dirTree = require("directory-tree");
 
 const DIRECTORY_TYPE = "directory";
 const DIRECTORY_ICON = "$(folder)";
 const FILE_TYPE = "file";
-const FILE_ICON = "$(git-commit)";
+const FILE_ICON = "$(file)";
 let mypick = undefined;
 let currentBasePath = "";
 let currentFoldersList = [];
 let files = {};
 let currentFilesList = [];
-
+const filtered_folders = ["node_modules"];
 function getIcon(type) {
     return type == FILE_TYPE ? FILE_ICON : DIRECTORY_ICON;
 }
@@ -26,7 +25,7 @@ function transformToArray(current, path) {
             name: f.name,
             type: f.type
         }
-        if (f.type == DIRECTORY_TYPE) {
+        if (f.type == DIRECTORY_TYPE && !filtered_folders.includes(f.name)) {
             newArray[f.name]["children"] = transformToArray(f.children, `${path}${f.name}/`);
             newArray[f.name]["children"][".."] = {
                 label: `${DIRECTORY_ICON} ..`,
@@ -105,8 +104,7 @@ function searchFile(path, val) {
 
 function activate(context) {
     const directory = (vscode.workspace.rootPath || "/");
-    const tempfiles = dirTree(directory, { attributes: ["type"] });
-    files = transformToArray(tempfiles.children, "");
+
     function selectedValue(mySelection) {
         const current = (mySelection || mypick.activeItems[0]);
         if (current["type"] == DIRECTORY_TYPE) {
@@ -122,6 +120,8 @@ function activate(context) {
         }
     }
     let disposable = vscode.commands.registerCommand('better-quick-open.quickopen', async function () {
+        const tempfiles = dirTree(directory, { attributes: ["type"] });
+        files = transformToArray(tempfiles.children, "");
         mypick = vscode.window.createQuickPick();
         mypick.ignoreFocusOut = true;
         currentBasePath = "";
@@ -132,8 +132,8 @@ function activate(context) {
             if (val != "") {
                 if (val.substring(val.length - 1, val.length) == "/") {
                     mypick.value = mypick.value.substring(0, mypick.value.length - 1);
-                    selectedValue(mypick.items.find((e) => { return e.name == mypick.value }));
-                }else{
+                    selectedValue(currentFoldersList.find((e) => { return e.name == mypick.value }));
+                } else {
                     currentFilesList = sortFiles(searchFile(currentBasePath, val));
                     mypick.items = currentFilesList;
                 }
