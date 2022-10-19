@@ -11,7 +11,7 @@ let currentBasePath = "";
 let currentFoldersList = [];
 let files = {};
 let currentFilesList = [];
-const filtered_folders = ["node_modules"];
+const filtered_folders = ["node_modules", ".."];
 function getIcon(type) {
     return type == FILE_TYPE ? FILE_ICON : DIRECTORY_ICON;
 }
@@ -94,7 +94,7 @@ function searchFile(path, val) {
                 name: currentDict[k].name
             });
         }
-        if (currentDict[k].type == DIRECTORY_TYPE && currentDict[k].name != "..") {
+        if (currentDict[k].type == DIRECTORY_TYPE && !filtered_folders.includes(currentDict[k].name)) {
             res = [...res, ...searchFile(`${path}${path != "" ? "/" : ""}${currentDict[k].name}`, val)];
         }
     });
@@ -129,12 +129,12 @@ function activate(context) {
         mypick.items = currentFoldersList;
         mypick.show();
         mypick.onDidChangeValue((val) => {
-            if (val != "") {
+            if (mypick.value != "") {
                 if (val.substring(val.length - 1, val.length) == "/") {
                     mypick.value = mypick.value.substring(0, mypick.value.length - 1);
                     selectedValue(currentFoldersList.find((e) => { return e.name == mypick.value }));
                 } else {
-                    currentFilesList = sortFiles(searchFile(currentBasePath, val));
+                    currentFilesList = sortFiles(searchFile(currentBasePath, mypick.value));
                     mypick.items = currentFilesList;
                 }
             } else {
