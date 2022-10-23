@@ -8,6 +8,18 @@ A simple vscode extension to replace `quick open` from vscode, to add routing an
 - If you search for a file inside a folder, it will search only inside that folder.
 - `node_modules` folder is filtered
 
+## Installation
+
+```sh
+mkdir ~/.vscode/extensions/takenx10.better-quick-open-0.0.3
+cd ~/.vscode/extensions/takenx10.better-quick-open-0.0.3
+git clone https://github.com/takenX10/better-quick-open
+```
+
+now open vscode, press `ctrl+shift+p` and search for `Preferences: Open Keyboard Shortcut(JSON)`, then add
+
+> `{ "key": "ctrl+p", "command": "better-quick-open.quickopen" },`
+
 ## TODOs
 
 - Add language specific icons to files
